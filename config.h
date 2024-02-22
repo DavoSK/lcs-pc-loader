@@ -1,0 +1,1 @@
+#define DATA_PATH "ux0:data/gtasa"

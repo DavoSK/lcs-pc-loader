@@ -1,0 +1,4 @@
+libopenal-dev
+libmpg123-dev
+libgles2-mesa-dev
+libglfw3-dev
