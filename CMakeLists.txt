@@ -6,8 +6,12 @@ add_executable(lcs
     game.cpp 
     mojoelf.cpp 
     jni_patch.cpp
+    falsojni_impl.cpp
 )
 
 add_subdirectory(FalsoJNI)
-target_link_libraries(lcs PRIVATE falsojni mpg123 glfw stdc++)
+add_subdirectory(subhook)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
+target_link_libraries(lcs PRIVATE falsojni pthread subhook mpg123 glfw stdc++)
 set_property(TARGET lcs PROPERTY ENABLE_EXPORTS ON)

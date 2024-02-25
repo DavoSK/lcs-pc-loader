@@ -601,6 +601,7 @@ static int map_pages(ElfContext *ctx)
         DLOPEN_FAIL("mmap failed");
 
     Memzero(mmapaddr, mmaplen);
+    printf("mmapaddr: %p\n", mmapaddr);
     ctx->retval->mmapaddr = mmapaddr;
     ctx->retval->mmaplen = mmaplen;
 
@@ -912,8 +913,10 @@ static int resolve_symbol(ElfContext *ctx, const uint32 sym, uintptr *_addr)
                 addr = ctx->resolver(NULL, symstr); // last try.
                 if (addr == NULL)
                 {
-                    if (ELF_ST_BIND(symbol->st_info) != STB_WEAK)
-                        DLOPEN_FAIL("Couldn't resolve symbol");
+                    // if (ELF_ST_BIND(symbol->st_info) != STB_WEAK)
+                    //     DLOPEN_FAIL("Couldn't resolve symbol");
+
+                    printf("[!] %s\n", symstr);
                 } // if
             }     // if
         }         // if
@@ -1304,7 +1307,6 @@ void MOJOELF_dlclose(void *lib)
     } // if
 
     free(h);
-    printf("yeppers !\n");
 } // MOJOELF_dlclose
 
 #if MOJOELF_SUPPORT_DLOPEN_FILE
