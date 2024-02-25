@@ -34,7 +34,8 @@ typedef int64_t(*Test_t)(int w, int h);
 typedef int64_t(*Test_t2)();
 typedef float(*Test_t3)(float w, float h);
 
-void game_init() {
+void* game_run(void*) {
+
     if (!glfwInit()) {
         exit(EXIT_FAILURE);
     }
@@ -53,11 +54,9 @@ void game_init() {
     glfwMakeContextCurrent(window);
     gladLoadGLES2(glfwGetProcAddress);
     glfwSwapInterval(1);
-}
 
-void game_run() {
     InitGame_t InitGame = (InitGame_t)MOJOELF_dlsym(game_library, "_Z8InitGamev");
-    InitGame_t StartGameBeforeLoad = (InitGame_t)MOJOELF_dlsym(game_library, "Java_com_rockstargames_gtalcs_RockstarJNIlib_StartGame");
+    InitGame_t StartGameBeforeLoad = (InitGame_t)MOJOELF_dlsym(game_library, "Java_com_rockstargames_gtalcs_RockstarJNIlib_StartGameBeforeLoad");
 
     GTAJNIlib_markInitialized_t markInitialized = (GTAJNIlib_markInitialized_t)MOJOELF_dlsym(game_library, "Java_com_rockstargames_gtalcs_GTAJNIlib_markInitialized");
     GTAJNIlib_viewOnDrawFrame_t viewOnDrawFrame = (GTAJNIlib_viewOnDrawFrame_t)MOJOELF_dlsym(game_library, "Java_com_rockstargames_gtalcs_GTAJNIlib_viewOnDrawFrame");
@@ -88,11 +87,10 @@ void game_run() {
 
     InitGame();
     printf("InitGame!\n");    
-    
-    StartGameBeforeLoad();
-    printf("StartGameBeforeLoad ok!\n");
 
-    
+    //StartGameBeforeLoad();
+    //printf("StartGameBeforeLoad ok!\n");
+
     markInitialized();
 
     while (!glfwWindowShouldClose(window)) {
@@ -112,5 +110,6 @@ void game_run() {
     }
  
     glfwDestroyWindow(window);
-    glfwTerminate();   
+    glfwTerminate();
+    return 0;
 }

@@ -53,7 +53,12 @@ extern "C"
     void setKeepScreenOn(jmethodID id, va_list args) {
         jboolean arg = va_arg(args, jboolean);
         printf("[JNI] - setKeepScreenOn: %d !\n", arg);
-    }   
+    }
+     
+    void setInUI(jmethodID id, va_list args) {
+        jboolean arg = va_arg(args, jboolean);
+        printf("[JNI] - setInUI: %d !\n", arg);
+    }
 
     NameToMethodID nameToMethodId[] = {
         { PLAY_VIDEO, "PlayVideo", METHOD_TYPE_VOID },
@@ -101,6 +106,7 @@ extern "C"
     MethodsVoid methodsVoid[] = {
         { SHOW_LOADING_SCREEN, ShowLoadingScreen },
         { SET_KEEP_SCREEN_ON, setKeepScreenOn },
+        { SET_IN_UI, setInUI },
     };
 
     NameToFieldID nameToFieldId[] = {};

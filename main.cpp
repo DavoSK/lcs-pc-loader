@@ -347,69 +347,36 @@ void my_library_close(void)
 }
 
 subhook::Hook foo_hook;
-// subhook::Hook foo_hook2;
-// subhook::Hook foo_hook3;
-// subhook::Hook foo_hook4;
+
+#include <stdexcept>
+#include <iostream>
+
+#include <exception>
+#include <typeinfo>
 
 bool initVertexArrays_hook() {
-    uint64_t* glGenVertexArraysAddr = (uint64_t*)MOJOELF_dlsym(game_library, "glGenVertexArrays");
-    *glGenVertexArraysAddr = (uint64_t)glfwGetProcAddress("glGenVertexArraysOES");
+    uintptr_t* glGenVertexArraysAddr = (uintptr_t*)MOJOELF_dlsym(game_library, "glGenVertexArrays");
+    *glGenVertexArraysAddr = (uintptr_t)glfwGetProcAddress("glGenVertexArraysOES");
     //printf("[x] - glGenVertexArraysAddr: %p -> %p\n", glGenVertexArraysAddr, (void*)*glGenVertexArraysAddr);
 
-    uint64_t* glBindVertexArrayAddr = (uint64_t*)MOJOELF_dlsym(game_library, "glBindVertexArray");
-    *glBindVertexArrayAddr = (uint64_t)glfwGetProcAddress("glBindVertexArray");
+    uintptr_t* glBindVertexArrayAddr = (uintptr_t*)MOJOELF_dlsym(game_library, "glBindVertexArray");
+    *glBindVertexArrayAddr = (uintptr_t)glfwGetProcAddress("glBindVertexArray");
     //printf("[x] - glBindVertexArrayAddr: %p -> %p\n", glBindVertexArrayAddr, (void*)*glBindVertexArrayAddr);
 
-    uint64_t* glDeleteVertexArraysAddr = (uint64_t*)MOJOELF_dlsym(game_library, "glDeleteVertexArrays");
-    *glDeleteVertexArraysAddr = (uint64_t)glfwGetProcAddress("glDeleteVertexArraysOES");
+    uintptr_t* glDeleteVertexArraysAddr = (uintptr_t*)MOJOELF_dlsym(game_library, "glDeleteVertexArrays");
+    *glDeleteVertexArraysAddr = (uintptr_t)glfwGetProcAddress("glDeleteVertexArraysOES");
     //printf("[x] - glDeleteVertexArraysOES: %p -> %p\n", glDeleteVertexArraysAddr, (void*)*glDeleteVertexArraysAddr);
 
     bool& vertexArraysSupported = *(bool*)MOJOELF_dlsym(game_library, "vertexArraysSupported");
-    vertexArraysSupported = *glGenVertexArraysAddr != NULL && *glBindVertexArrayAddr != NULL && *glDeleteVertexArraysAddr != NULL;
+    vertexArraysSupported = *glGenVertexArraysAddr != 0 && *glBindVertexArrayAddr != 0 && *glDeleteVertexArraysAddr != 0;
     //printf("vertexArraysSupported: %d\n", vertexArraysSupported);
     return vertexArraysSupported;
 }
 
-// typedef void* (*WadArchive__OpenFile_t)(void* wad, const char *a2);
-// WadArchive__OpenFile_t open_file = NULL;
-
-// void* WadArchive__OpenFile(void* wad, const char *a2) {
-//     subhook::ScopedHookRemove remove(&foo_hook2);
-//     void* file = open_file(wad, a2);
-//     if(!file) {
-//         printf("WadArchive__OpenFile: %p, %s -> %p\n", wad, a2, file);
-//     }
-//     return file;
-// }
-
-// typedef void* (*lglTextureLoader__loadTextureFromPath_t)(void *loader, void *textureTask, const char *a3);
-// lglTextureLoader__loadTextureFromPath_t lglTextureLoader__loadTextureFromPath = NULL;
-
-// bool lglTextureLoader__loadTextureFromPath_Hook(void *loader, void *textureTask, const char *texturePath)
-// {
-//     subhook::ScopedHookRemove remove(&foo_hook3);
-//     bool wasloaded = lglTextureLoader__loadTextureFromPath(loader, textureTask, texturePath);
-//     if(!wasloaded) {
-//         printf("lglTextureLoader__loadTextureFromPath %s\n", texturePath);
-//     }
-//     return wasloaded;
-// }
-
-// typedef void* (*Platform__FileOpenOSFilePath_t)(char *a1, int a2, int a3);
-// Platform__FileOpenOSFilePath_t Platform__FileOpenOSFilePath = NULL;
-
-// void* Platform__FileOpenOSFilePath_Hook(char *a1, int a2, int a3)
-// {
-//     subhook::ScopedHookRemove remove(&foo_hook4);
-//     printf("Platform__FileOpenOSFilePath (%s, %d, %d)\n", a1, a2, a3);
-//     void* ptr = Platform__FileOpenOSFilePath(a1, a2, a3);
-//     return ptr;
-// }
 
 int main(void) {
     self_library = dlopen(NULL, RTLD_LAZY);
     mpg123_init();
-    game_init(); //Lets load opengl before we start loading library
     printf("LCS Windows loader kek !\n");
     MOJOELF_Callbacks callbacks = {
         .loader     = my_loader,
@@ -430,18 +397,11 @@ int main(void) {
     void* initVertexArrays = MOJOELF_dlsym(game_library, "_Z16initVertexArraysv");
     foo_hook.Install((void *)initVertexArrays, (void *)&initVertexArrays_hook, subhook::HookFlags::HookFlag64BitOffset);
 
-    // open_file = (WadArchive__OpenFile_t)MOJOELF_dlsym(game_library, "_ZN10WadArchive8OpenFileEPKc8FileMode");
-    // foo_hook2.Install((void *)open_file, (void *)&WadArchive__OpenFile, subhook::HookFlags::HookFlag64BitOffset);
-
-    // lglTextureLoader__loadTextureFromPath = (lglTextureLoader__loadTextureFromPath_t)MOJOELF_dlsym(game_library, "_ZN16lglTextureLoader19loadTextureFromPathEP14lglTextureTaskPKc");
-    // foo_hook3.Install((void *)lglTextureLoader__loadTextureFromPath, (void *)&lglTextureLoader__loadTextureFromPath_Hook, subhook::HookFlags::HookFlag64BitOffset);
-
-    // Platform__FileOpenOSFilePath = (Platform__FileOpenOSFilePath_t)MOJOELF_dlsym(game_library, "_ZN8Platform18FileOpenOSFilePathEPKc8FileModei");
-    // foo_hook4.Install((void *)Platform__FileOpenOSFilePath, (void *)&Platform__FileOpenOSFilePath_Hook, subhook::HookFlags::HookFlag64BitOffset);
-
     jni_load();
-    game_run();
 
-    printf("jni loaded ? !\n");
+    // pthread_t newThread;
+    // pthread_create(&newThread, NULL, &game_run, NULL);
+    // pthread_join(newThread, NULL); 
+    game_run(NULL);
     return 0;
 }
