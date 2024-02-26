@@ -61,7 +61,6 @@ int __android_log_assert(const char *cond, const char *tag, const char *fmt, ...
 
 int __android_log_print(int prio, const char *tag, const char *fmt, ...)
 {
-#ifdef DEBUG
     va_list list;
     char string[512];
 
@@ -69,18 +68,19 @@ int __android_log_print(int prio, const char *tag, const char *fmt, ...)
     vsprintf(string, fmt, list);
     va_end(list);
 
-    debugPrintf("[LOG] %s: %s\n", tag, string);
-#endif
+    printf("[LOG] %s: %s\n", tag, string);
     return 0;
 }
 
-int __android_log_vprint(int prio, const char *tag, const char *fmt, va_list ap)
+extern "C" int __android_log_vprint(int prio, const char *tag, const char *fmt, va_list ap)
 {
+    printf("[%s] [%s]\n", tag, fmt);
     return 0;
 }
 
-int __android_log_write(int prio, const char *tag, const char *text)
+extern "C" int __android_log_write(int prio, const char *tag, const char *text)
 {
+    printf("[%s] - %s\n", tag, text);
     return 0;
 }
 
@@ -97,7 +97,6 @@ void* eglGetDisplay_faker(EGLNativeDisplayType display_id) {
     return 0;
 }
 
-
 EGLBoolean eglChooseConfig_faker(EGLDisplay dpy, const EGLint * attrib_list, EGLConfig * configs, EGLint config_size, EGLint * num_config) {
     printf("eglChooseConfig_faker !\n");
     configs[0] = (EGLConfig)0x22;
@@ -111,15 +110,12 @@ EGLBoolean eglGetConfigAttrib_faker(EGLDisplay dpy, EGLConfig config, EGLint att
     return 0;
 }
 
-const GLubyte* glGetString_faker(unsigned int name) {
-    return glGetString(name);
-}
-
-void* eglGetProcAddress_faker(const char* procname) {
+extern "C" void* eglGetProcAddress_faker(const char* procname) {
     GLFWglproc result = glfwGetProcAddress(procname);
     if(!result) {
-        printf("[!] eglGetProcAddress_faker: %s\n", procname);
+        printf("[!] glGenVertexArraysOES: %s\n", procname);
     }
+
     return (void*)result;
 }
 
@@ -127,14 +123,13 @@ EGLBoolean eglMakeCurrent_faker(EGLDisplay display,
  	EGLSurface draw,
  	EGLSurface read,
  	EGLContext context) {
-    
-    printf("eglMakeCurrent_faker !\n");
+    //printf("eglMakeCurrent_faker !\n");
     return true;
 }
 
 EGLBoolean eglSwapBuffers_faker(EGLDisplay display,
  	EGLSurface surface) {
-    printf("eglSwapBuffers !!!!!!!!!!!!!!!!!!!!!\n"); 
+    //printf("eglSwapBuffers !!!!!!!!!!!!!!!!!!!!!\n"); 
     return true;
 }
 
@@ -148,42 +143,20 @@ FILE* fopen_hook(const char* path, const char* modes) {
     return file;
 }
 
-// GLuint glCreateShader_fake(GLenum shaderType) {
-//     printf("glCreateShader_fake: %d\n", shaderType);
-//     return glCreateShader(shaderType);          
-// }
-
-// GLuint glCreateProgram_fake(void) {
-//     printf("[g] glCreateProgram_fake\n");
-//     return glCreateProgram();
-// }
-
-void glClearColor_fake(	GLfloat red,
- 	GLfloat green,
- 	GLfloat blue,
- 	GLfloat alpha) {
-    printf("glClearColor !!!\n");
-}
-
-// void glShaderSource_fake(GLuint shader,
-//  	GLsizei count,
-//  	const GLchar **string,
-//  	const GLint *length) {
-    
-//     printf("----------------------\n");
-//     printf("glShaderSource:\n");
-//     for(size_t i = 0; i < count; ++i) {
-//         printf("[src] (%d):\n%s\n", i, string[i]);
-//     }
-//     printf("----------------------\n");
-//     return glShaderSource(shader, count, string, length);
-// }
-
 void* AAssetManager_open(void* amgr, const char* filename, int mode) {   
     printf("AAssetManager_open!!!\n");
     return 0;
 }
 
+// int pthread_create_hook(pthread_t *thread,
+//                           const pthread_attr_t *attr,
+//                           void *(*start_routine)(void *),
+//                           void *arg) {
+    
+//     int res = pthread_create(thread, attr, start_routine, arg);
+//     printf("pthread_create: %p, -> start routine: %p\n", *thread, (void*)((uint64_t)start_routine  - (uint64_t)base));
+//     return res;
+// }
 // void* alcOpenDevice_faker(void* ctx) {
 //     printf("alcOpenDevice_faker !!!\n");
 //     return NULL;
@@ -193,10 +166,18 @@ int* __errno_hook() {
     return &errno;
 }
 
- pthread_t  pthread_self_hook() {
-    printf("pthread_self_hook !\n");
-    return pthread_self();
- }
+uint64_t glGenVertexArrays_c = 0x0;
+uint64_t glBindVertexArray_c = 0x0;
+uint64_t glDeleteVertexArrays_c = 0x0;
+uint64_t scmainIsInit_c = 0x0;
+
+void glViewport_hook(GLint x,
+ 	GLint y,
+ 	GLsizei width,
+ 	GLsizei height) {
+    //printf("glViewport_hook: %d %d, %d %d\n", x, y, width, height);
+    glViewport(x, y, width, height);
+}
 
 static so_default_dynlib default_dynlib[] = {
     {"__android_log_assert", (uintptr_t)&__android_log_assert},
@@ -230,15 +211,14 @@ static so_default_dynlib default_dynlib[] = {
     {"eglMakeCurrent", (uintptr_t)&eglMakeCurrent_faker}, 
     {"eglSwapBuffers", (uintptr_t)&eglSwapBuffers_faker},
 
-    //{"alcOpenDevice", (uintptr_t)&alcOpenDevice_faker},
-
-    {"glClearColor", (uintptr_t)&glClearColor_fake},
-    // {"glCreateProgram", (uintptr_t)&glCreateProgram_fake},
-    // {"glCreateShader", (uintptr_t)&glCreateShader_fake},
-    // {"glShaderSource", (uintptr_t)&glShaderSource_fake},
     {"fopen", (uintptr_t)&fopen_hook},
+    {"glGenVertexArrays", (uintptr_t)&glGenVertexArrays_c},
+    {"glBindVertexArray", (uintptr_t)&glBindVertexArray_c},
+    {"glDeleteVertexArrays", (uintptr_t)&glDeleteVertexArrays_c},
+    {"scmainIsInit", (uintptr_t)&scmainIsInit_c},
+    {"glViewport", (uintptr_t)&glViewport_hook},
     //{"pthread_self", (uintptr_t)&pthread_self_hook},
-
+    //{"pthread_create", (uintptr_t)&pthread_create_hook }
 };
 
 static so_ndk_map ndk_map[] = {
@@ -347,6 +327,8 @@ void my_library_close(void)
 }
 
 subhook::Hook foo_hook;
+subhook::Hook foo_hook2;
+subhook::Hook foo_hook3;
 
 #include <stdexcept>
 #include <iostream>
@@ -354,25 +336,22 @@ subhook::Hook foo_hook;
 #include <exception>
 #include <typeinfo>
 
-bool initVertexArrays_hook() {
-    uintptr_t* glGenVertexArraysAddr = (uintptr_t*)MOJOELF_dlsym(game_library, "glGenVertexArrays");
-    *glGenVertexArraysAddr = (uintptr_t)glfwGetProcAddress("glGenVertexArraysOES");
-    //printf("[x] - glGenVertexArraysAddr: %p -> %p\n", glGenVertexArraysAddr, (void*)*glGenVertexArraysAddr);
+extern void* base;
 
-    uintptr_t* glBindVertexArrayAddr = (uintptr_t*)MOJOELF_dlsym(game_library, "glBindVertexArray");
-    *glBindVertexArrayAddr = (uintptr_t)glfwGetProcAddress("glBindVertexArray");
-    //printf("[x] - glBindVertexArrayAddr: %p -> %p\n", glBindVertexArrayAddr, (void*)*glBindVertexArrayAddr);
-
-    uintptr_t* glDeleteVertexArraysAddr = (uintptr_t*)MOJOELF_dlsym(game_library, "glDeleteVertexArrays");
-    *glDeleteVertexArraysAddr = (uintptr_t)glfwGetProcAddress("glDeleteVertexArraysOES");
-    //printf("[x] - glDeleteVertexArraysOES: %p -> %p\n", glDeleteVertexArraysAddr, (void*)*glDeleteVertexArraysAddr);
-
-    bool& vertexArraysSupported = *(bool*)MOJOELF_dlsym(game_library, "vertexArraysSupported");
-    vertexArraysSupported = *glGenVertexArraysAddr != 0 && *glBindVertexArrayAddr != 0 && *glDeleteVertexArraysAddr != 0;
-    //printf("vertexArraysSupported: %d\n", vertexArraysSupported);
-    return vertexArraysSupported;
+void* hal__Main__update_hook(void* _this, float stuff) {
+    return 0;
 }
 
+// void* Touchscreen__WriteToSettings_hook(void* _this,
+//         void* CFileMgr) {
+//     printf("Touchscreen__WriteToSettings_hook!!!\n");
+//     return 0;
+// }
+
+// void* Touchscreen__ResetButtStates_hook(void* _this) {
+//     printf("Touchscreen__ResetButtStates!!!\n");
+//     return 0;
+// }
 
 int main(void) {
     self_library = dlopen(NULL, RTLD_LAZY);
@@ -394,14 +373,36 @@ int main(void) {
     printf("[*] lib loaded: %p\n", game_library);
     //MOJOELF_dlclose(game_library);
 
-    void* initVertexArrays = MOJOELF_dlsym(game_library, "_Z16initVertexArraysv");
-    foo_hook.Install((void *)initVertexArrays, (void *)&initVertexArrays_hook, subhook::HookFlags::HookFlag64BitOffset);
+    void* hal__Main__update = MOJOELF_dlsym(game_library, "_ZN3hal4Main6updateEf");
+    foo_hook.Install(hal__Main__update, (void *)&hal__Main__update_hook, subhook::HookFlags::HookFlag64BitOffset);
+
+    // void* Touchscreen__WriteToSettings = MOJOELF_dlsym(game_library, "_ZN11Touchscreen15WriteToSettingsEm");
+    // foo_hook2.Install(Touchscreen__WriteToSettings, (void *)&Touchscreen__WriteToSettings_hook, subhook::HookFlags::HookFlag64BitOffset);
+
+    // void* Touchscreen__ResetButtStates = MOJOELF_dlsym(game_library, "_ZN11Touchscreen15ResetButtStatesEv");
+    // foo_hook3.Install(Touchscreen__ResetButtStates, (void*)&Touchscreen__ResetButtStates_hook, subhook::HookFlags::HookFlag64BitOffset);
 
     jni_load();
-
-    // pthread_t newThread;
-    // pthread_create(&newThread, NULL, &game_run, NULL);
-    // pthread_join(newThread, NULL); 
     game_run(NULL);
+    
+    /*std::set_terminate([]() -> void {
+        std::cerr << "terminate called after throwing an instance of ";
+        try
+        {
+            std::rethrow_exception(std::current_exception());
+        }
+        catch (const std::exception &ex)
+        {
+            std::cerr << typeid(ex).name() << std::endl;
+            std::cerr << "  what(): " << ex.what() << std::endl;
+        }
+        catch (...)
+        {
+            std::cerr << typeid(std::current_exception()).name() << std::endl;
+            std::cerr << " ...something, not an exception, dunno what." << std::endl;
+        }
+        std::cerr << "errno: " << errno << ": " << std::strerror(errno) << std::endl;
+        std::abort();
+    });*/
     return 0;
 }

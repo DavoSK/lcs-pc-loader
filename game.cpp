@@ -11,11 +11,14 @@
 #define GLAD_GLES2_IMPLEMENTATION
 #include "gles2.h"
 
+#include <time.h>
 #include <vector>
 #include <tuple>
 #include <string>
+#include <unistd.h>
 
-static GLFWwindow* window = NULL;
+GLFWwindow* window = NULL;
+extern void* base;
 
 static void error_callback(int error, const char* description) {
     fprintf(stderr, "Error: %s\n", description);
@@ -33,6 +36,20 @@ typedef void (*GTAJNIlib_viewOnDrawFrame_t)(float deltaTime);
 typedef int64_t(*Test_t)(int w, int h);
 typedef int64_t(*Test_t2)();
 typedef float(*Test_t3)(float w, float h);
+
+enum eGameState
+{
+    GS_START_UP = 0,
+    GS_INIT_LOGO_MPEG,
+    GS_LOGO_MPEG,
+    GS_INIT_INTRO_MPEG,
+    GS_INTRO_MPEG,
+    GS_INIT_ONCE,
+    GS_INIT_FRONTEND,
+    GS_FRONTEND,
+    GS_INIT_PLAYING_GAME,
+    GS_PLAYING_GAME,
+};
 
 void* game_run(void*) {
 
@@ -77,34 +94,45 @@ void* game_run(void*) {
 
     int& Width = *(int*)MOJOELF_dlsym(game_library, "Width");
     int& Height = *(int*)MOJOELF_dlsym(game_library, "Height");
+    eGameState& gameState = *(eGameState*)MOJOELF_dlsym(game_library, "gGameState");//*(uint64_t*)(((uint64_t)base + 0x0000000000AF2A08));
 
     Width = 800;
     Height= 600;
     
-    bool& gameCanRender = *(bool*)MOJOELF_dlsym(game_library, "gameCanRender");
-    gameCanRender = true;
-    printf("gameCanRender: %d\n", gameCanRender);
-
+    *(bool*)MOJOELF_dlsym(game_library, "gameCanRender") = true;
+    
     InitGame();
     printf("InitGame!\n");    
 
-    //StartGameBeforeLoad();
-    //printf("StartGameBeforeLoad ok!\n");
-
     markInitialized();
+    printf("Start game before load !\n");
+
+    *(bool*)(((uint64_t)base + 0x0000000000AF2A80)) = true;
+
+    double last_ticke_time = glfwGetTime();
 
     while (!glfwWindowShouldClose(window)) {
-        int _width, _height;
-        glfwGetFramebufferSize(window, &_width, &_height);
-        
-        if(_width != Width || _height != Height) {
-            Width = _width;
-            Height = _height;
+        //int _width, _height;
+        //glfwGetFramebufferSize(window, &_width, &_height);
+
+        double delta_time = glfwGetTime() - last_ticke_time;
+        last_ticke_time = glfwGetTime();
+
+        // if(_width != Width || _height != Height) {
+        //     Width = _width;
+        //     Height = _height;
+        // }
+
+        if(gameState == GS_LOGO_MPEG) {
+            gameState = GS_INIT_ONCE;
         }
 
-        glViewport(0, 0, Width, Height);
-        viewOnDrawFrame(0.16f);
-        //tickGame(0.16f);
+        if(gameState == GS_FRONTEND) {
+            StartGameBeforeLoad();
+        }
+
+        viewOnDrawFrame(delta_time);
+        glFlush();
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

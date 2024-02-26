@@ -581,6 +581,8 @@ static int process_section_headers(ElfContext *ctx)
     return 1;
 } // process_section_headers
 
+void* base = 0x0;
+
 // Get the ELF programs into memory at the right place.
 static int map_pages(ElfContext *ctx)
 {
@@ -602,6 +604,8 @@ static int map_pages(ElfContext *ctx)
 
     Memzero(mmapaddr, mmaplen);
     printf("mmapaddr: %p\n", mmapaddr);
+    base = mmapaddr;
+    
     ctx->retval->mmapaddr = mmapaddr;
     ctx->retval->mmaplen = mmaplen;
 

@@ -50,6 +50,30 @@ extern "C"
         printf("[JNI] - ShowLoadingScreen !\n");
     }
 
+    void HideLoadingScreen(jmethodID id, va_list args) {
+        printf("[JNI] - HideLoadingScreen !\n");
+    }
+    
+    void UpdateRockstarID(jmethodID id, va_list args) {
+        printf("[JNI] - UpdateRockstarID !\n");
+    }
+
+    void SetLocalePriority(jmethodID id, va_list args) {
+        printf("[JNI] - SetLocalePriority !\n");
+    }
+
+    void PlaylistBeginInit(jmethodID id, va_list args) {
+        printf("[JNI] - PlaylistBeginInit !\n");
+    }
+
+    void ShowPrompt(jmethodID id, va_list args) {
+        printf("[JNI] - ShowPrompt !\n");
+    }
+
+    void GameLoad(jmethodID id, va_list args) {
+        printf("[JNI] - GameLoad !\n");    
+    }
+
     void setKeepScreenOn(jmethodID id, va_list args) {
         jboolean arg = va_arg(args, jboolean);
         printf("[JNI] - setKeepScreenOn: %d !\n", arg);
@@ -105,8 +129,15 @@ extern "C"
     MethodsShort methodsShort[] = {};
     MethodsVoid methodsVoid[] = {
         { SHOW_LOADING_SCREEN, ShowLoadingScreen },
+        { SHOW_LOADING_BAR, ShowLoadingBar },
+        { HIDE_LOADING_SCREEN, HideLoadingScreen },
         { SET_KEEP_SCREEN_ON, setKeepScreenOn },
         { SET_IN_UI, setInUI },
+        { UPDATE_ROCKSTAR_ID, UpdateRockstarID },
+        { SET_LOCALE_PRIORITY, SetLocalePriority },
+        { PLAYLIST_BEGIN_INIT, PlaylistBeginInit },
+        { SHOW_PROMPT, ShowPrompt },
+        { GAME_LOAD, GameLoad }
     };
 
     NameToFieldID nameToFieldId[] = {};
