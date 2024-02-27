@@ -33,11 +33,7 @@ typedef struct
 void* self_library = NULL;
 void* game_library = NULL;
 
-void android_set_abort_message(const char* msg) {
-}
-
-void *my_loader(const char *soname, const char *rpath, const char *runpath)
-{
+void *my_loader(const char *soname, const char *rpath, const char *runpath) {
     void *handle = dlopen(soname, RTLD_LAZY);
     if (handle) return handle;
 
@@ -45,22 +41,20 @@ void *my_loader(const char *soname, const char *rpath, const char *runpath)
     return NULL;
 }
 
-void my_unloader(void* handle) 
-{
-    if(handle) 
-    {
-        printf("unload: %p\n", handle);
+void android_set_abort_message(const char* msg) {
+}
+
+void my_unloader(void* handle)  {
+    if(handle) {
         dlclose(handle);
     }
 }
 
-int __android_log_assert(const char *cond, const char *tag, const char *fmt, ...)
-{
+int __android_log_assert(const char *cond, const char *tag, const char *fmt, ...) {
     return 0;
 }
 
-int __android_log_print(int prio, const char *tag, const char *fmt, ...)
-{
+int __android_log_print(int prio, const char *tag, const char *fmt, ...) {
     va_list list;
     char string[512];
 
@@ -72,43 +66,22 @@ int __android_log_print(int prio, const char *tag, const char *fmt, ...)
     return 0;
 }
 
-extern "C" int __android_log_vprint(int prio, const char *tag, const char *fmt, va_list ap)
-{
+extern "C" int __android_log_vprint(int prio, const char *tag, const char *fmt, va_list ap) {
     printf("[%s] [%s]\n", tag, fmt);
     return 0;
 }
 
-extern "C" int __android_log_write(int prio, const char *tag, const char *text)
-{
+extern "C" int __android_log_write(int prio, const char *tag, const char *text) {
     printf("[%s] - %s\n", tag, text);
     return 0;
 }
 
-int ret0(void)
-{
+int ret0(void) {
     return 0;
 }
 
 static char *__ctype_ = (char *)&__ctype_;
 static FILE __sF_fake[0x100][3];
-
-void* eglGetDisplay_faker(EGLNativeDisplayType display_id) {
-    printf("eglGetDisplay_faker !\n");
-    return 0;
-}
-
-EGLBoolean eglChooseConfig_faker(EGLDisplay dpy, const EGLint * attrib_list, EGLConfig * configs, EGLint config_size, EGLint * num_config) {
-    printf("eglChooseConfig_faker !\n");
-    configs[0] = (EGLConfig)0x22;
-    configs[1] = (EGLConfig)0x22; //fake ptr;
-    *num_config = 1;
-    return 0;
-}
-
-EGLBoolean eglGetConfigAttrib_faker(EGLDisplay dpy, EGLConfig config, EGLint attribute, EGLint * value) {
-    printf("eglGetConfigAttrib_faker !\n");
-    return 0;
-}
 
 extern "C" void* eglGetProcAddress_faker(const char* procname) {
     GLFWglproc result = glfwGetProcAddress(procname);
@@ -123,13 +96,11 @@ EGLBoolean eglMakeCurrent_faker(EGLDisplay display,
  	EGLSurface draw,
  	EGLSurface read,
  	EGLContext context) {
-    //printf("eglMakeCurrent_faker !\n");
     return true;
 }
 
 EGLBoolean eglSwapBuffers_faker(EGLDisplay display,
  	EGLSurface surface) {
-    //printf("eglSwapBuffers !!!!!!!!!!!!!!!!!!!!!\n"); 
     return true;
 }
 
@@ -143,25 +114,6 @@ FILE* fopen_hook(const char* path, const char* modes) {
     return file;
 }
 
-void* AAssetManager_open(void* amgr, const char* filename, int mode) {   
-    printf("AAssetManager_open!!!\n");
-    return 0;
-}
-
-// int pthread_create_hook(pthread_t *thread,
-//                           const pthread_attr_t *attr,
-//                           void *(*start_routine)(void *),
-//                           void *arg) {
-    
-//     int res = pthread_create(thread, attr, start_routine, arg);
-//     printf("pthread_create: %p, -> start routine: %p\n", *thread, (void*)((uint64_t)start_routine  - (uint64_t)base));
-//     return res;
-// }
-// void* alcOpenDevice_faker(void* ctx) {
-//     printf("alcOpenDevice_faker !!!\n");
-//     return NULL;
-// }
-
 int* __errno_hook() {
     return &errno;
 }
@@ -169,15 +121,6 @@ int* __errno_hook() {
 uint64_t glGenVertexArrays_c = 0x0;
 uint64_t glBindVertexArray_c = 0x0;
 uint64_t glDeleteVertexArrays_c = 0x0;
-uint64_t scmainIsInit_c = 0x0;
-
-void glViewport_hook(GLint x,
- 	GLint y,
- 	GLsizei width,
- 	GLsizei height) {
-    //printf("glViewport_hook: %d %d, %d %d\n", x, y, width, height);
-    glViewport(x, y, width, height);
-}
 
 static so_default_dynlib default_dynlib[] = {
     {"__android_log_assert", (uintptr_t)&__android_log_assert},
@@ -202,11 +145,8 @@ static so_default_dynlib default_dynlib[] = {
     {"AAsset_read", (uintptr_t)&ret0},
     {"AAsset_seek", (uintptr_t)&ret0},
     {"AAssetManager_fromJava", (uintptr_t)&ret0},
-    {"AAssetManager_open", (uintptr_t)&AAssetManager_open},
+    {"AAssetManager_open", (uintptr_t)&ret0},
 
-    {"eglGetDisplay", (uintptr_t)&eglGetDisplay_faker},
-    {"eglChooseConfig", (uintptr_t)&eglChooseConfig_faker},
-    {"eglGetConfigAttrib", (uintptr_t)&eglGetConfigAttrib_faker},
     {"eglGetProcAddress", (uintptr_t)&eglGetProcAddress_faker},
     {"eglMakeCurrent", (uintptr_t)&eglMakeCurrent_faker}, 
     {"eglSwapBuffers", (uintptr_t)&eglSwapBuffers_faker},
@@ -215,9 +155,6 @@ static so_default_dynlib default_dynlib[] = {
     {"glGenVertexArrays", (uintptr_t)&glGenVertexArrays_c},
     {"glBindVertexArray", (uintptr_t)&glBindVertexArray_c},
     {"glDeleteVertexArrays", (uintptr_t)&glDeleteVertexArrays_c},
-    {"scmainIsInit", (uintptr_t)&scmainIsInit_c},
-    {"glViewport", (uintptr_t)&glViewport_hook},
-    //{"pthread_self", (uintptr_t)&pthread_self_hook},
     //{"pthread_create", (uintptr_t)&pthread_create_hook }
 };
 
@@ -315,53 +252,20 @@ void *my_resolver(void *handle, const char *sym) {
     return NULL; /* can't help you. */
 }
 
-void before_init(void *handle)
-{
-    printf("\n\n");
-}
-
-void my_library_close(void) __attribute__ ((destructor));
-void my_library_close(void)
-{
-    dlclose(self_library);
-}
-
 subhook::Hook foo_hook;
-subhook::Hook foo_hook2;
-subhook::Hook foo_hook3;
-
-#include <stdexcept>
-#include <iostream>
-
-#include <exception>
-#include <typeinfo>
-
-extern void* base;
 
 void* hal__Main__update_hook(void* _this, float stuff) {
     return 0;
 }
 
-// void* Touchscreen__WriteToSettings_hook(void* _this,
-//         void* CFileMgr) {
-//     printf("Touchscreen__WriteToSettings_hook!!!\n");
-//     return 0;
-// }
-
-// void* Touchscreen__ResetButtStates_hook(void* _this) {
-//     printf("Touchscreen__ResetButtStates!!!\n");
-//     return 0;
-// }
-
 int main(void) {
     self_library = dlopen(NULL, RTLD_LAZY);
-    mpg123_init();
+    //mpg123_init();
     printf("LCS Windows loader kek !\n");
     MOJOELF_Callbacks callbacks = {
         .loader     = my_loader,
         .resolver   = my_resolver,
-        .unloader   = my_unloader,
-        .beforeinit = before_init    
+        .unloader   = my_unloader,    
     };
 
     game_library = MOJOELF_dlopen_file("/home/david/lcs/libGame.so", &callbacks);
@@ -371,38 +275,14 @@ int main(void) {
     }
 
     printf("[*] lib loaded: %p\n", game_library);
-    //MOJOELF_dlclose(game_library);
 
     void* hal__Main__update = MOJOELF_dlsym(game_library, "_ZN3hal4Main6updateEf");
     foo_hook.Install(hal__Main__update, (void *)&hal__Main__update_hook, subhook::HookFlags::HookFlag64BitOffset);
 
-    // void* Touchscreen__WriteToSettings = MOJOELF_dlsym(game_library, "_ZN11Touchscreen15WriteToSettingsEm");
-    // foo_hook2.Install(Touchscreen__WriteToSettings, (void *)&Touchscreen__WriteToSettings_hook, subhook::HookFlags::HookFlag64BitOffset);
-
-    // void* Touchscreen__ResetButtStates = MOJOELF_dlsym(game_library, "_ZN11Touchscreen15ResetButtStatesEv");
-    // foo_hook3.Install(Touchscreen__ResetButtStates, (void*)&Touchscreen__ResetButtStates_hook, subhook::HookFlags::HookFlag64BitOffset);
-
     jni_load();
     game_run(NULL);
-    
-    /*std::set_terminate([]() -> void {
-        std::cerr << "terminate called after throwing an instance of ";
-        try
-        {
-            std::rethrow_exception(std::current_exception());
-        }
-        catch (const std::exception &ex)
-        {
-            std::cerr << typeid(ex).name() << std::endl;
-            std::cerr << "  what(): " << ex.what() << std::endl;
-        }
-        catch (...)
-        {
-            std::cerr << typeid(std::current_exception()).name() << std::endl;
-            std::cerr << " ...something, not an exception, dunno what." << std::endl;
-        }
-        std::cerr << "errno: " << errno << ": " << std::strerror(errno) << std::endl;
-        std::abort();
-    });*/
+
+    MOJOELF_dlclose(game_library);
+    dlclose(self_library);
     return 0;
 }

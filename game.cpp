@@ -17,26 +17,6 @@
 #include <string>
 #include <unistd.h>
 
-GLFWwindow* window = NULL;
-extern void* base;
-
-static void error_callback(int error, const char* description) {
-    fprintf(stderr, "Error: %s\n", description);
-}
- 
-static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
-}
-
-typedef int64_t(*InitGame_t)();
-typedef void (*GTAJNIlib_markInitialized_t)();
-typedef void (*GTAJNIlib_viewOnDrawFrame_t)(float deltaTime);
-
-typedef int64_t(*Test_t)(int w, int h);
-typedef int64_t(*Test_t2)();
-typedef float(*Test_t3)(float w, float h);
-
 enum eGameState
 {
     GS_START_UP = 0,
@@ -51,15 +31,45 @@ enum eGameState
     GS_PLAYING_GAME,
 };
 
-void* game_run(void*) {
+GLFWwindow* window = NULL;
+extern void* base;
 
+typedef void (*GTAJNIlib_markInitialized_t)();
+typedef void (*GTAJNIlib_viewOnDrawFrame_t)(float deltaTime);
+typedef void (*InitGame_t)();
+
+typedef int64_t(*TouchEvent_t)(int, int, int, int);
+TouchEvent_t test_touch_event = NULL;
+
+static void error_callback(int error, const char* description) {
+    fprintf(stderr, "Error: %s\n", description);
+}
+ 
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
+    }
+}
+
+static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+    if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+       double x, y;
+       glfwGetCursorPos(window, &x, &y);
+       printf("%f %f\n", x, y);
+       test_touch_event(2, 1, x, y);
+    }
+}
+
+void* game_run(void*) {
     if (!glfwInit()) {
         exit(EXIT_FAILURE);
     }
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
- 
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_ANY_PROFILE);
+
     window = glfwCreateWindow(800, 600, "Testing window", NULL, NULL);
     if (!window) {
         glfwTerminate();
@@ -67,11 +77,14 @@ void* game_run(void*) {
     }
     
     glfwSetKeyCallback(window, key_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetErrorCallback(error_callback);
     glfwMakeContextCurrent(window);
     gladLoadGLES2(glfwGetProcAddress);
     glfwSwapInterval(1);
+    printf("GLES: %s\n", glGetString(GL_VERSION));
 
+    test_touch_event = (TouchEvent_t)MOJOELF_dlsym(game_library, "_Z14AND_TouchEventiiii");
     InitGame_t InitGame = (InitGame_t)MOJOELF_dlsym(game_library, "_Z8InitGamev");
     InitGame_t StartGameBeforeLoad = (InitGame_t)MOJOELF_dlsym(game_library, "Java_com_rockstargames_gtalcs_RockstarJNIlib_StartGameBeforeLoad");
 
@@ -85,16 +98,9 @@ void* game_run(void*) {
     char* g_AppSupportPath = (char*)MOJOELF_dlsym(game_library, "g_AppSupportPath");
     strcpy(g_AppSupportPath, "/home/david/lcs/build/here");
 
-    // auto& g_BundleSearchPaths = *(std::vector<std::string>*)(MOJOELF_dlsym(game_library, "g_BundleSearchPaths"));
-    // //g_BundleSearchPaths.
-    // printf("size: %d\n", g_BundleSearchPaths.size());
-    // g_BundleSearchPaths.push_back("");
-    // g_BundleSearchPaths.push_back("");
-    // g_BundleSearchPaths.push_back("");
-
     int& Width = *(int*)MOJOELF_dlsym(game_library, "Width");
     int& Height = *(int*)MOJOELF_dlsym(game_library, "Height");
-    eGameState& gameState = *(eGameState*)MOJOELF_dlsym(game_library, "gGameState");//*(uint64_t*)(((uint64_t)base + 0x0000000000AF2A08));
+    eGameState& gameState = *(eGameState*)MOJOELF_dlsym(game_library, "gGameState");
 
     Width = 800;
     Height= 600;
@@ -102,12 +108,12 @@ void* game_run(void*) {
     *(bool*)MOJOELF_dlsym(game_library, "gameCanRender") = true;
     
     InitGame();
-    printf("InitGame!\n");    
+    printf("InitGame!\n");
 
     markInitialized();
     printf("Start game before load !\n");
 
-    *(bool*)(((uint64_t)base + 0x0000000000AF2A80)) = true;
+    *(bool*)(((uint64_t)base + 0x0000000000AF2A80)) = true; //bIsPlaylistInited or something like that
 
     double last_ticke_time = glfwGetTime();
 
@@ -117,22 +123,16 @@ void* game_run(void*) {
 
         double delta_time = glfwGetTime() - last_ticke_time;
         last_ticke_time = glfwGetTime();
-
-        // if(_width != Width || _height != Height) {
-        //     Width = _width;
-        //     Height = _height;
-        // }
-
+        
         if(gameState == GS_LOGO_MPEG) {
             gameState = GS_INIT_ONCE;
         }
 
-        if(gameState == GS_FRONTEND) {
-            StartGameBeforeLoad();
-        }
+        // if(gameState == GS_FRONTEND) {
+        //     StartGameBeforeLoad();
+        // }
 
         viewOnDrawFrame(delta_time);
-        glFlush();
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
