@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "game.h"
+
 enum MethodsIds {
     PLAY_VIDEO = 1,
     PLAYLIST_BEGIN_INIT, 
@@ -41,6 +43,14 @@ extern "C"
         return (jobject)"en";
     }
 
+    jobject GetVersionName(jmethodID id, va_list args) {
+        return (jobject)"djhubertus2000";
+    }
+
+    jboolean GooglePlaylistAvailable(jmethodID id, va_list args) {
+        return false;
+    }
+
     void ShowLoadingBar(jmethodID id, va_list args) {
         jfloat progress = va_arg(args, jfloat);
         printf("[JNI] - ShowLoadingBar: %f !\n", progress);
@@ -68,6 +78,16 @@ extern "C"
 
     void ShowPrompt(jmethodID id, va_list args) {
         printf("[JNI] - ShowPrompt !\n");
+    }
+
+    void ShowGate(jmethodID id, va_list args) {
+        printf("[JNI] - ShowGate !\n");
+        show_gate_before_load();
+    }
+    
+    void ShowGateBeforeLoad(jmethodID id, va_list args) {
+        printf("[JNI] - ShowGateBeforeLoad !\n");
+        show_gate();
     }
 
     void GameLoad(jmethodID id, va_list args) {
@@ -116,7 +136,9 @@ extern "C"
         { GAME_LOAD, "GameLoad", METHOD_TYPE_VOID },
     };
 
-    MethodsBoolean methodsBoolean[] = {};
+    MethodsBoolean methodsBoolean[] = {
+        { GOOGLE_PLAYLIST_AVAILABLE, GooglePlaylistAvailable }
+    };
     MethodsByte methodsByte[] = {};
     MethodsChar methodsChar[] = {};
     MethodsDouble methodsDouble[] = {};
@@ -125,6 +147,7 @@ extern "C"
     MethodsLong methodsLong[] = {};
     MethodsObject methodsObject[] = {
         { GET_DEVICE_LANGUAGE,  GetDeviceLanguage },
+        { GET_VERSION_NAME, GetVersionName },
     };
     MethodsShort methodsShort[] = {};
     MethodsVoid methodsVoid[] = {
@@ -137,7 +160,9 @@ extern "C"
         { SET_LOCALE_PRIORITY, SetLocalePriority },
         { PLAYLIST_BEGIN_INIT, PlaylistBeginInit },
         { SHOW_PROMPT, ShowPrompt },
-        { GAME_LOAD, GameLoad }
+        { GAME_LOAD, GameLoad },
+        { SHOW_GATE, ShowGate },
+        { SHOW_GATE_BEFORE_LOAD, ShowGateBeforeLoad }
     };
 
     NameToFieldID nameToFieldId[] = {};

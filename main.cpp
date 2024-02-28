@@ -106,11 +106,9 @@ EGLBoolean eglSwapBuffers_faker(EGLDisplay display,
 
 FILE* fopen_hook(const char* path, const char* modes) {
     FILE* file = fopen(path, modes);
-    // if(!file) {
-    //     printf("fopen(%s, %s);\n", path, modes);
-    //     return NULL;
-    //     //return fopen("./dummy.txt", modes);      
-    // }
+    if(!file) {
+        printf("[!] fopen(%s, %s);\n", path, modes);
+    }
     return file;
 }
 
@@ -155,7 +153,6 @@ static so_default_dynlib default_dynlib[] = {
     {"glGenVertexArrays", (uintptr_t)&glGenVertexArrays_c},
     {"glBindVertexArray", (uintptr_t)&glBindVertexArray_c},
     {"glDeleteVertexArrays", (uintptr_t)&glDeleteVertexArrays_c},
-    //{"pthread_create", (uintptr_t)&pthread_create_hook }
 };
 
 static so_ndk_map ndk_map[] = {
@@ -253,14 +250,53 @@ void *my_resolver(void *handle, const char *sym) {
 }
 
 subhook::Hook foo_hook;
+subhook::Hook foo_hook2;
+subhook::Hook foo_hook3;
+
+typedef void (*cWorldStreamEx__SetModelMatrix_t)(void* _this, void* mat);
+typedef bool (*SetModelMatrix_t)(void* mat);
+SetModelMatrix_t Culling_SetModelMatrix = NULL;
+cWorldStreamEx__SetModelMatrix_t cWorldStreamEx__SetModelMatrix = NULL;
+
+void cWorldStreamEx__SetModelMatrix_hook(void* _this, void* mat) {
+    
+    //printf("cWorldStreamEx__SetModelMatrix\n");
+    //subhook::ScopedHookRemove remove(&foo_hook2);
+    //printf("yeS: %p, %p\n", _this, mat);
+
+//    uint64_t smth =  *(uint64_t*)((uint64_t)_this +  0x5C);
+//    *(uint64_t*)((uint64_t)_this +  0x5C) = NULL;
+   
+//    cWorldStreamEx__SetModelMatrix(_this, mat);
+
+//    *(uint64_t*)((uint64_t)_this +  0x5C) = smth;
+
+    //if(mat) {
+
+        Culling_SetModelMatrix(mat);
+    //}
+}
 
 void* hal__Main__update_hook(void* _this, float stuff) {
     return 0;
 }
 
+typedef void (*Render2dStuff_t)();
+Render2dStuff_t Render2dStuff = NULL;
+
+Render2dStuff_t DrawFPS = NULL;
+
+void Render2dStuff_hook(void)
+{
+    subhook::ScopedHookRemove remove(&foo_hook3);
+    Render2dStuff();
+    DrawFPS();
+}
+
 int main(void) {
     self_library = dlopen(NULL, RTLD_LAZY);
-    //mpg123_init();
+    mpg123_init();
+    
     printf("LCS Windows loader kek !\n");
     MOJOELF_Callbacks callbacks = {
         .loader     = my_loader,
@@ -268,7 +304,7 @@ int main(void) {
         .unloader   = my_unloader,    
     };
 
-    game_library = MOJOELF_dlopen_file("/home/david/lcs/libGame.so", &callbacks);
+    game_library = MOJOELF_dlopen_file("../libGame.so", &callbacks);
     if (!game_library) {
         printf("[!] unable to load lib: %s\n", MOJOELF_dlerror());
         return 1;
@@ -279,7 +315,15 @@ int main(void) {
     void* hal__Main__update = MOJOELF_dlsym(game_library, "_ZN3hal4Main6updateEf");
     foo_hook.Install(hal__Main__update, (void *)&hal__Main__update_hook, subhook::HookFlags::HookFlag64BitOffset);
 
-    jni_load();
+    Culling_SetModelMatrix = (SetModelMatrix_t)MOJOELF_dlsym(game_library, "_ZN7Display9C_Culling14SetModelMatrixERKN5Maths6MatrixE");
+
+    cWorldStreamEx__SetModelMatrix = (cWorldStreamEx__SetModelMatrix_t)MOJOELF_dlsym(game_library, "_ZN14cWorldStreamEx14SetModelMatrixERK7CMatrix");
+    foo_hook2.Install((void*)cWorldStreamEx__SetModelMatrix, (void *)&cWorldStreamEx__SetModelMatrix_hook, subhook::HookFlags::HookFlag64BitOffset);
+
+    DrawFPS = (Render2dStuff_t)MOJOELF_dlsym(game_library, "_Z7DrawFPSv");
+    Render2dStuff = (Render2dStuff_t)MOJOELF_dlsym(game_library, "_Z13Render2dStuffv");
+    foo_hook3.Install((void*)Render2dStuff, (void *)&Render2dStuff_hook, subhook::HookFlags::HookFlag64BitOffset);
+    jni_load(); 
     game_run(NULL);
 
     MOJOELF_dlclose(game_library);
