@@ -1,4 +1,1 @@
-libopenal-dev
-libmpg123-dev
-libgles2-mesa-dev
-libglfw3-dev
+libopenal-dev libmpg123-dev libgles2-mesa-dev libglfw3-dev libc++-dev libc++abi-dev cmake clang gdb

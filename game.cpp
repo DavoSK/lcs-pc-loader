@@ -63,11 +63,14 @@ static void mouse_button_callback(GLFWwindow* window, int button, int action, in
 void show_gate() {
     FinishGate();
     StartGame();
+    printf("StartGame\n");
 }
+
 
 void show_gate_before_load() {
     FinishGate();
-    StartGame();
+    StartGameBeforeLoad();
+    printf("StartGameBeforeLoad\n");
 }
 
 void* game_run(void*) {

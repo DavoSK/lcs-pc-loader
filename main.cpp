@@ -149,7 +149,7 @@ static so_default_dynlib default_dynlib[] = {
     {"eglMakeCurrent", (uintptr_t)&eglMakeCurrent_faker}, 
     {"eglSwapBuffers", (uintptr_t)&eglSwapBuffers_faker},
 
-    {"fopen", (uintptr_t)&fopen_hook},
+    //{"fopen", (uintptr_t)&fopen_hook},
     {"glGenVertexArrays", (uintptr_t)&glGenVertexArrays_c},
     {"glBindVertexArray", (uintptr_t)&glBindVertexArray_c},
     {"glDeleteVertexArrays", (uintptr_t)&glDeleteVertexArrays_c},
@@ -295,7 +295,7 @@ void Render2dStuff_hook(void)
 
 int main(void) {
     self_library = dlopen(NULL, RTLD_LAZY);
-    mpg123_init();
+    //mpg123_init();
     
     printf("LCS Windows loader kek !\n");
     MOJOELF_Callbacks callbacks = {

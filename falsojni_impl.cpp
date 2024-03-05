@@ -3,6 +3,8 @@
 
 #include "game.h"
 
+#define DBG_LOG
+
 enum MethodsIds {
     PLAY_VIDEO = 1,
     PLAYLIST_BEGIN_INIT, 
@@ -53,55 +55,55 @@ extern "C"
 
     void ShowLoadingBar(jmethodID id, va_list args) {
         jfloat progress = va_arg(args, jfloat);
-        printf("[JNI] - ShowLoadingBar: %f !\n", progress);
+        DBG_LOG("[JNI] - ShowLoadingBar: %f !\n", progress);
     }
 
     void ShowLoadingScreen(jmethodID id, va_list args) {
-        printf("[JNI] - ShowLoadingScreen !\n");
+        DBG_LOG("[JNI] - ShowLoadingScreen !\n");
     }
 
     void HideLoadingScreen(jmethodID id, va_list args) {
-        printf("[JNI] - HideLoadingScreen !\n");
+        DBG_LOG("[JNI] - HideLoadingScreen !\n");
     }
     
     void UpdateRockstarID(jmethodID id, va_list args) {
-        printf("[JNI] - UpdateRockstarID !\n");
+        DBG_LOG("[JNI] - UpdateRockstarID !\n");
     }
 
     void SetLocalePriority(jmethodID id, va_list args) {
-        printf("[JNI] - SetLocalePriority !\n");
+        DBG_LOG("[JNI] - SetLocalePriority !\n");
     }
 
     void PlaylistBeginInit(jmethodID id, va_list args) {
-        printf("[JNI] - PlaylistBeginInit !\n");
+        DBG_LOG("[JNI] - PlaylistBeginInit !\n");
     }
 
     void ShowPrompt(jmethodID id, va_list args) {
-        printf("[JNI] - ShowPrompt !\n");
+        DBG_LOG("[JNI] - ShowPrompt !\n");
     }
 
     void ShowGate(jmethodID id, va_list args) {
-        printf("[JNI] - ShowGate !\n");
-        show_gate_before_load();
+        DBG_LOG("[JNI] - ShowGate !\n");
+        show_gate();
     }
     
     void ShowGateBeforeLoad(jmethodID id, va_list args) {
-        printf("[JNI] - ShowGateBeforeLoad !\n");
-        show_gate();
+        DBG_LOG("[JNI] - ShowGateBeforeLoad !\n");
+        show_gate_before_load();
     }
 
     void GameLoad(jmethodID id, va_list args) {
-        printf("[JNI] - GameLoad !\n");    
+        DBG_LOG("[JNI] - GameLoad !\n");    
     }
 
     void setKeepScreenOn(jmethodID id, va_list args) {
         jboolean arg = va_arg(args, jboolean);
-        printf("[JNI] - setKeepScreenOn: %d !\n", arg);
+        DBG_LOG("[JNI] - setKeepScreenOn: %d !\n", arg);
     }
      
     void setInUI(jmethodID id, va_list args) {
         jboolean arg = va_arg(args, jboolean);
-        printf("[JNI] - setInUI: %d !\n", arg);
+        DBG_LOG("[JNI] - setInUI: %d !\n", arg);
     }
 
     NameToMethodID nameToMethodId[] = {
