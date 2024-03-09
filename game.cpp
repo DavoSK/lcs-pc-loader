@@ -102,7 +102,7 @@ void* game_run(void*) {
     StartGame = (InitGame_t)MOJOELF_dlsym(game_library, "Java_com_rockstargames_gtalcs_RockstarJNIlib_StartGame");
     StartGameBeforeLoad = (InitGame_t)MOJOELF_dlsym(game_library, "Java_com_rockstargames_gtalcs_RockstarJNIlib_StartGameBeforeLoad");
     FinishGate = (InitGame_t)MOJOELF_dlsym(game_library, "Java_com_rockstargames_gtalcs_RockstarJNIlib_FinishGate");
-    
+    InitGame_t HandlePlaylistFinishInit = (InitGame_t)MOJOELF_dlsym(game_library, "Java_com_rockstargames_gtalcs_CommonAPI_HandlePlaylistFinishInit");
 
     GTAJNIlib_markInitialized_t markInitialized = (GTAJNIlib_markInitialized_t)MOJOELF_dlsym(game_library, "Java_com_rockstargames_gtalcs_GTAJNIlib_markInitialized");
     GTAJNIlib_viewOnDrawFrame_t viewOnDrawFrame = (GTAJNIlib_viewOnDrawFrame_t)MOJOELF_dlsym(game_library, "Java_com_rockstargames_gtalcs_GTAJNIlib_viewOnDrawFrame");
@@ -129,8 +129,7 @@ void* game_run(void*) {
     markInitialized();
     printf("Start game before load !\n");
 
-    *(bool*)(((uint64_t)base + 0x0000000000AF2A80)) = true; //bIsPlaylistInited or something like that
-
+    HandlePlaylistFinishInit();
     double last_ticke_time = glfwGetTime();
     
     int& joypadConnected = *(int*)MOJOELF_dlsym(game_library, "JoypadsConnected");
@@ -144,20 +143,20 @@ void* game_run(void*) {
         last_ticke_time = glfwGetTime();
 
         //NOTE: fake input axis
-        GamepadAxis[0] = glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS ? -1.0f : GamepadAxis[0];
-        GamepadAxis[0] = glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS ? 1.0f : GamepadAxis[0];
-        if (glfwGetKey(window, GLFW_KEY_LEFT) != GLFW_PRESS && glfwGetKey(window, GLFW_KEY_RIGHT) != GLFW_PRESS) {
+        GamepadAxis[0] = glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS ? -1.0f : GamepadAxis[0];
+        GamepadAxis[0] = glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS ? 1.0f : GamepadAxis[0];
+        if (glfwGetKey(window, GLFW_KEY_A) != GLFW_PRESS && glfwGetKey(window, GLFW_KEY_D) != GLFW_PRESS) {
             GamepadAxis[0] = 0.0f;
         }
 
-        GamepadAxis[1] = glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS ? -1.0f : GamepadAxis[1];
-        GamepadAxis[1] = glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS ? 1.0f : GamepadAxis[1];
-         if (glfwGetKey(window, GLFW_KEY_UP) != GLFW_PRESS && glfwGetKey(window, GLFW_KEY_DOWN) != GLFW_PRESS) {
+        GamepadAxis[1] = glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS ? -1.0f : GamepadAxis[1];
+        GamepadAxis[1] = glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS ? 1.0f : GamepadAxis[1];
+         if (glfwGetKey(window, GLFW_KEY_W) != GLFW_PRESS && glfwGetKey(window, GLFW_KEY_S) != GLFW_PRESS) {
             GamepadAxis[1] = 0.0f;
         }
 
-        //NOTE: fake inpput buttons
-        joypadButtons[GLFW_GAMEPAD_BUTTON_A] = glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
+        //NOTE: fake inpput buttorns
+        joypadButtons[GLFW_GAMEPAD_BUTTON_A] = glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS;
         joypadButtons[GLFW_GAMEPAD_BUTTON_B] = glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS;
         joypadButtons[GLFW_GAMEPAD_BUTTON_Y] = glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS;
         joypadButtons[GLFW_GAMEPAD_BUTTON_X] = glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS;
